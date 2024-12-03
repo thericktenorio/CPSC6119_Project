@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en" data-bs-theme = "dark">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <style>
+      .modal-content{
+        background-color: #343a40;
+        color : white;
+      }
+    </style>
+
+
+    <title>CRM</title>
+  </head>
+  <body>
+
+    {% include "navigationbar.html"%}
+
+    <div class = "container">
+        </br>
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-secondary alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}
+        
+        {% endblock %}
+    </div>
+
+    <!-- Dialog box for importing clients from external file -->
+    <div class = "modal fade" id = "importClientsModal" tabindex = "-1" role = "dialog" aria-albelledby = "importClientsLabel" aria-hidden = "true">
+      <div class = "modal-dialog modal-dialog-centered" role = "document">
+        <div class = "modal-content">
+          <div class = "modal-header">
+            <h5 class = "modal-title" id = "importClientsLabel"> Import Clients From Excel </h5>
+            <button type = "button" class = "close" data-dismiss = "modal" aria-label = "Close">
+              <span aria-hidden = "true">&times;</span>
+            </button>
+          </div>
+          <div class = "modal-body">
+            <form method = "POST" action = "{% url 'import_clients' %}" enctype = "multipart/form-data">
+              {%csrf_token %}
+              <div class = "form-group">
+                <label for = "clientFile" class = "custom-file-upload"> Choose File </label>
+                <input type = "file" class = "form-control-file" id = "clientFile" name = "client_file" required>
+              </div>
+              <br><button type = "submit" class = "btn btn-primary"> Import Clients </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+
+    <!-- Dialog box for exporting clients to an excel file -->
+    <div class = "modal fade" id = "exportClientsModal" tabindex = "-1" role = "dialog" aria-albelledby = "exportClientsLabel" aria-hidden = "true">
+      <div class = "modal-dialog modal-dialog-centered" role = "document">
+        <div class = "modal-content">
+          <div class = "modal-header">
+            <h5 class = "modal-title" id = "exportClientsLabel"> Export Clients To Excel </h5>
+            <button type = "button" class = "close" data-dismiss = "modal" aria-label = "close">
+              <span aria-hidden = "true">&times;</span>
+            </button>
+          </div>
+          <div class = "modal-body">
+            <form method = "GET" action = "{% url 'export_clients' %}">
+              <div class = "form-group">
+                <button type = "submit" class = "btn btn-primary"> Export Clients </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+  
+  
+  {% block extra_js %}
+    <!-- See home.html block content -->
+  {% endblock %}
+  
+  </body>
+</html>

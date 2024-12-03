@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+<!-- Client Table Data & Visual -->
+{% block content %}    
+    
+    {% if user.is_authenticated %}
+        <!-- Create client table -->
+        <style>.table{border-radius: 20px; overflow: hidden;}</style>
+        <table class = "table table-dark table-striped table-hover caption-top">
+            <caption><button type = "button" class = "btn btn-dark" id = "addRowBtn"> Add Row </button></caption>
+            <thead>
+                <tr>
+                    <th scope = "col" style = "text-align: center;">ID</th>
+                    <th scope = "col" style = "text-align: center;">TIN</th>
+                    <th scope = "col" style = "text-align: center;">Name</th>
+                    <th scope = "col" style = "text-align: center;">Filing Type</th>
+                    <th scope = "col" style = "text-align: center;">Tax Year</th>
+                    <th scope = "col" style = "text-align: center;">Product</th>
+                </tr>
+            </thead>
+            <tbody class = "table-group-divider">
+                <!-- Display clients to editable table, if any -->
+                {% if clients %}
+                    {% for client in clients %}
+                        <tr data-client-id = "{{ client.id }}">
+                            <td data-field = "id" style = "text-align: center;">{{ client.id }}</td>
+                            <td contenteditable = "true" class = "editable" data-field = "TIN" style = "text-align: center;">{{ client.TIN }}</td>
+                            <td contenteditable = "true" class = "editable" data-field = "name" style = "text-align: center;">{{ client.name }}</td>
+                            <td style = "text-align: center;">
+                                <select class = "editable" data-field = "filing_type">
+                                    <option value = '' {% if client.filing_type == '' %} selected {% endif %}></option>
+                                    <option value = "Simple" {% if client.filing_type == 'Simple' %} selected {% endif %}>Simple</option>
+                                    <option value = "Credits" {% if client.filing_type == 'Credits' %} selected {% endif %}>Credits</option>
+                                    <option value = "Itemizing" {% if client.filing_type == 'Itemizing' %} selected {% endif %}>Itemizing</option>
+                                    <option value = "Sole Proprietor" {% if client.filing_type == 'Sole Proprietor' %} selected {% endif %}>Sole Proprietor</option>
+                                    <option value = "Corporation" {% if client.filing_type == 'Corporation' %} selected {% endif %}>Corporation</option>
+                                </select>
+                            </td>
+                            <td contenteditable = "true" class = "editable" data-field = "tax_year" style = "text-align: center;">{{ client.tax_year }}</td>
+                            <td style = "text-align: center;">
+                                <select class = "editable" data-field = "product">
+                                    <option value = '' {% if client.product == '' %} selected {% endif %}></option>
+                                    <option value = "Personal Taxes" {% if client.product == 'Personal Taxes' %} selected {% endif %}>Personal Taxes</option>
+                                    <option value = "Corporate Taxes" {% if client.product == 'Corporate Taxes' %} selected {% endif %}>Corporate Taxes</option>
+                                    <option value = "Extension" {% if client.product == 'Extension' %} selected {% endif %}>Extension</option>
+                                    <option value = "Amendment" {% if client.product == 'Amendment' %} selected {% endif %}>Amendment</option>
+                                    <option value = "Withholdings Adjustment" {% if client.product == 'Withholdings Adjustment' %} selected {% endif %}>Withholdings Adjustment</option>
+                                    <option value = "Advisory" {% if client.product == 'Advisory' %} selected {% endif %}>Advisory</option>
+                                    <option value = "Reject Correction" {% if client.product == 'Reject Correction' %} selected {% endif %}>Reject Correction</option>
+                                </select>
+                            </td>
+                            <!-- Delete Button -->
+                             <td>
+                                <button type = "button" class = "btn btn-dark deleteClient"> Delete </button>
+                             </td>
+                        </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+    {% else %}
+        <!-- Request user login -->
+        <h1>Login</h1>
+        <form method="POST" action="{% url 'home' %}">
+            {% csrf_token %}
+            <br><div class="form-group">
+                <input type = "text" class = "form-control" name="username" placeholder = "username" required>
+            </div>
+            <div class="form-group">
+                <input type = "password" class = "form-control" name="password" placeholder = "password" required>
+            </div>
+            <br><button type="submit" class="btn btn-primary">Login</button>    
+        </form>
+    {% endif %}
+{% endblock %}
+
+
+{% block extra_js %}
+    <!-- AJAX via JQuery & JavaScript -->
+    <script src = "https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script>
+    
+
+    $(document).ready(function() {
+        // Update client when table is edited
+        $('.editable').on('blur', function() {
+            var clientId = $(this).closest('tr').data('client-id'); // Get id for client (ie row)
+            var field = $(this).data('field');   // Get field being edited
+            var value = $(this).text();  // Get new value
+            // Update server via Ajax
+            $.ajax({
+                url: "{% url 'auto_update_client' %}",
+                type: "POST",
+                data: {
+                    'client_id': clientId,
+                    'field': field,
+                    'value': value,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}',
+                },
+                success: function(){},
+                error: function(){}
+            });
+        });
+    });
+
+
+    $(document).ready(function() {
+        // Update client when table dropdown is changed
+        $('select[data-field = "filing_type"], select[data-field = "product"]').on('change', function () {
+            var clientId = $(this).closest('tr').data('client-id');
+            var field = $(this).data('field');
+            var value = $(this).val();
+
+            if(field === 'filing_type' || field === 'product') {
+                // Update server via Ajax
+                $.ajax({
+                url: "{% url 'auto_update_client' %}",
+                type: "POST",
+                data: {
+                    'client_id': clientId,
+                    'field': field,
+                    'value': value,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(respnse){},
+                error: function(response){
+                    alert("Unable to update: " + rersponse.responseJSON.message);
+                }
+            });
+            }
+        });
+    });
+
+
+    $(document).ready(function(){
+        $('#addRowBtn').click(function() {
+            // Create new client
+            $.ajax({
+                url: "{% url 'create_new_client' %}",
+                type: "POST",
+                data: {'csrfmiddlewaretoken': '{{ csrf_token }}'},
+                success: function(clientResponse){
+                    if(clientResponse.status === 'success'){
+                        // Create new row
+                        var client = clientResponse;
+                        newRowHtml = `
+                            <tr data-client-id="${ client.client_id }">
+                                <td data-field = "id" style = "text-align: center;">${ client.client_id }</td>
+                                <td contenteditable = "true" class = "editable" data-field = "TIN" style = "text-align: center;">${ client.TIN }</td>
+                                <td contenteditable = "true" class = "editable" data-field = "name" style = "text-align: center;">${ client.name }</td>
+                                <td style = "text-align: center;">
+                                    <select class = "editable" data-field = "filing_type">
+                                        <option value = "" ${ client.filing_type} == '' ? 'selected' : '' }></option>
+                                        <option value = "Simple" ${ client.filing_type == 'Simple' ? 'selected' : '' }> Simple </option>
+                                        <option value = "Credits" ${ client.filing_type == 'Credits' ? 'selected' : '' }> Credits </option>
+                                        <option value = "Itemizing" ${ client.filing_type == 'Itemizing' ? 'selected' : '' }> Itemizing </option>
+                                        <option value = "Sole Proprietor" ${ client.filing_type == 'Sole Proprietor' ? 'selected' : '' }> Sole Proprietor </option>
+                                        <option value = "Corporation" ${ client.filing_type == 'Corporation' ? 'selected' : '' }> Corporation </option>
+                                    </select>
+                                </td>
+                                <td contenteditable = "true" class = "editable" data-field = "filing_type" style = "text-align: center;">${ client.filing_type }</td>
+                                <td contenteditable = "true" class = "editable" data-field = "tax_year" style = "text-align: center;">${ client.tax_year }</td>
+                                <td style = "text-align: center;">
+                                    <select class = "editable" data-field = "product">
+                                        <option value = "" ${ client.product == '' ? 'selected' : '' }></option>
+                                        <option value = "Personal Taxes" ${ client.product == 'Personal Taxes' ? 'selected' : '' }> Personal Taxes </option>
+                                        <option value = "Corporate Taxes" ${ client.product == 'Corporate Taxes' ? 'selected' : '' }> Corporate Taxes </option>
+                                        <option value = "Extension" ${ client.product == 'Extension' ? 'selected' : '' }> Extension </option>
+                                        <option value = "Amendment" ${ client.product == 'Amendment' ? 'selected' : '' }> Amendment </option>
+                                        <option value = "Withholdings Adjustment" ${ client.product == 'Withholdings Adjustment' ? 'selected' : '' }> Withholdings Adjustment </option>
+                                        <option value = "Advisory" ${ client.product= 'Advisory' ? 'selected' : '' }> Advisory </option>
+                                        <option value = "Reject Correction" ${ client.product == 'Reject Correction' ? 'selected' : '' }> Reject Correction </option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <button type = "button" class = "btn btn-dark deleteClient"> Delete </button>
+                                </td>
+                            </tr>
+                        `
+                        $('tbody').append(newRowHtml);
+                        
+                        // Establish new client in table via refreshing page
+                        // NOTE: This was done to save time during development. Running into new client & row synchronization issues.
+                        location.reload();
+
+                    } else {alert("Error: 'create_new_client' function failed.");}
+                },
+                error: function(){
+                    alert("Message: Something went worng. Unable to create new client.");
+                }
+            });            
+        });
+    });
+
+
+    $(document).ready(function(){
+        $(document).on('click', '.deleteClient', function(){    //NOTE: Consider this implementation when reconstructing "#addRow" for live application
+            var clientId = $(this).closest('tr').data('client-id');
+            // Delete client
+            $.ajax({
+                url: "{% url 'delete_client' %}",
+                type: "POST",
+                data: {
+                    'client_id': clientId,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response){
+                    if(response.status === 'success'){
+                        $('tr[data-client-id ="' + clientId + '"]').remove();
+                    } else {
+                        alert("Encountered error while accessing 'delete_client' method.")
+                    }
+                },
+                error: function(){
+                    alert("Error deleting client.")
+                }
+            });
+        });
+    });
+        
+    
+    </script>
+{% endblock %}

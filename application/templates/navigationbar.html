@@ -1,0 +1,56 @@
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="{% url 'home' %}">Tax CRM</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" 
+        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+            <!-- State based navigation bar options -->
+            {% if user.is_authenticated %}
+            <li class = "nav-item"><a class = "nav-link" href = "{% url 'home' %}"> Home </a></li>
+
+            <!-- Staff navigation bar options -->
+            {% if user.role == "Staff" %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" 
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> Actions </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="#" data-toggle = "modal" data-target = "#importClientsModal">Import Clients</a>
+                            <a class="dropdown-item" href="{% url 'export_clients' %}">Export Clients</a>
+                            <a class="dropdown-item" href="#">Audit Client Logs</a>
+                </li> 
+
+            {% else %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" 
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> Actions </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="#" data-toggle = "modal" data-target = "#importClientsModal">Import Clients</a>
+                            <a class="dropdown-item" href="{% url 'export_clients' %}">Export Clients</a>
+                            <a class="dropdown-item" href="{% url 'audit_client_logs' %}">Audit Client Logs</a>
+                        <div class="dropdown-divider"></div>
+                            <a class = "dropdown-item" href = "{% url 'register' %}"> Register New User </a>
+                            <a class = "dropdown-item" href = "{% url 'list_users' %}"> Manage Users </a>
+                        </div>
+                </li>
+
+            {% endif %}               
+            {% endif %}
+        </ul>
+
+        <!-- This separate list allows the 'Logout' button to be placed on the far lest of the UI -->
+        {% if user.is_authenticated %}
+            <ul class = "navbar-nav ml-auto">
+                <li class = "nav-item"><a class = "nav-link" href = "{% url 'logout' %}"> Logout </a></li>
+            </ul>
+        {% endif %}
+    </div>
+</nav>
+
+
+<!-- 
+<li class = "nav-item"><a class = "nav-link" href = "{% url 'register' %}"> Register </a></li>
+-->
